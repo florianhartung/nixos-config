@@ -2,12 +2,10 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-    ];
+  imports = [ ];
 
 
   fileSystems."/".options = [ "compress=zstd" "noatime" ];
@@ -16,6 +14,11 @@
   fileSystems."/persist".options = [ "compress=zstd" "noatime" ];
   fileSystems."/persist".neededForBoot = true;
 
+  fileSystems."/run/media/flo/backup-device" = {
+    device = "/dev/disk/by-uuid/F60EF4830EF43E65";
+    fsType = "ntfs";
+    options = [ "nofail" "users" ];
+  };
 
   # Bootloader.
   # boot.loader.systemd-boot.enable = true;
@@ -33,6 +36,11 @@
   boot.supportedFilesystems = [ "ntfs-3g" ];
   # boot.initrd.kernelModules = ["i915"];
 
+
+  # Fix command-not-found for flakes <https://blog.nobbz.dev/2023-02-27-nixos-flakes-command-not-found/>
+  environment.etc."programs.sqlite".source = inputs.programsdb.packages.${pkgs.system}.programs-sqlite;
+  programs.command-not-found.dbPath = "/etc/programs.sqlite";
+
   networking.hostName = "fw"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -46,7 +54,7 @@
   # Set your time zone.
   time.timeZone = "Europe/Berlin";
   # Necessary for dual boot
-  time.hardwareClockInLocalTime = true;
+  # time.hardwareClockInLocalTime = true;
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
@@ -69,15 +77,13 @@
     # Enable the GNOME Desktop Environment.
     displayManager.gdm.enable = true;
     desktopManager.gnome.enable = true;
+
+    # Configure keymap in X11
+    # layout = "us";
+    # xkbVariant = "altgr-intl";
   };
   # services.displayManager.ly.enable = true;
-  # programs.hyprland.enable = true;
-
-  # Configure keymap in X11
-  # services.xserver = {
-  # layout = "us";
-  # xkbVariant = "altgr-intl";
-  # };
+  programs.hyprland.enable = false;
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
@@ -101,10 +107,10 @@
     isNormalUser = true;
     description = "Florian Hartung";
     extraGroups = [ "audio" "networkmanager" "wheel" ];
-    # shell = pkgs.fish;
+    shell = pkgs.fish;
     hashedPasswordFile = "/persist/passwords/flo";
     packages = with pkgs; [
-    firefox
+      firefox
     ];
   };
 
@@ -115,12 +121,12 @@
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  # environment.systemPackages = with pkgs; [
+  environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
   #   helix
   #   kitty
-  # ];
+  ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -148,11 +154,6 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "24.11"; # Did you read the comment?
-
-  # VirtualBox
-  # virtualisation.virtualbox.host.enable = true;
-  # virtualisation.virtualbox.host.enableExtensionPack = true;
-  # users.extraGroups.vboxusers.members = [ "flo" ];
 
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];

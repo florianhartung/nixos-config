@@ -5,6 +5,10 @@
     # nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     impermanence.url = "github:nix-community/impermanence";
+    programsdb = {
+      url = "github:wamserma/flake-programs-sqlite";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, impermanence, ... }@inputs: {
@@ -21,11 +25,12 @@
           ./hardware-configuration.nix
           ./configuration.nix
 
+          ./virtualisation.nix
           impermanence.nixosModules.impermanence
           ./impermanence.nix
         ];
 
-        specialArgs = inputs // { pkgs=pkgs; };
+        specialArgs = { inherit inputs; };
     };
   };
 }
